@@ -1,0 +1,51 @@
+#==============================================================================
+# □ Game_StgEnemy
+#==============================================================================
+class Game_StgEnemy < Game_StgCharacter
+  #--------------------------------------------------------------------------
+  # ○ Flower Shot
+  #--------------------------------------------------------------------------
+  def flower_shot(blooms, petals, speed, interval, type, index = 0)
+    @reload_count = 0 if @reload_count == interval * blooms
+    if @reload_count % interval == 0
+      (0...blooms).each do |bloom|
+        angle = Math::PI * 2 * bloom / blooms
+        nway(petals, 0.0, angle, speed, false, type, index)
+      end
+    end
+  end
+  #--------------------------------------------------------------------------
+  # ○ Helix Shot
+  #--------------------------------------------------------------------------
+  def helix_shot(way, speed, interval, helix_factor, type, index = 0)
+    @reload_count = 0 if @reload_count == interval * way
+    if @reload_count % interval == 0
+      angle1 = Math::PI * 2 * (@reload_count / interval) * helix_factor
+      angle2 = angle1 + Math::PI
+      nway(way, angle1, 0.0, speed, false, type, index)
+      nway(way, angle2, 0.0, speed, false, type, index)
+    end
+  end
+  #--------------------------------------------------------------------------
+  # ○ Snake Shot
+  #--------------------------------------------------------------------------
+  def snake_shot(way, space, speed, interval, frequency, type, index = 0)
+    @reload_count = 0 if @reload_count == interval * way
+    (0...way).each do |i|
+      if @reload_count == i * interval + 1
+        angle = Math.sin(@reload_count * frequency) * space
+        nway(way, angle, 0.0, speed, true, type, index)
+      end
+    end
+  end  
+  #--------------------------------------------------------------------------
+  # ○ Spiral Shot
+  #--------------------------------------------------------------------------
+  def spiral_shot(way, speed, interval, spiral_speed, type, index = 0)
+    @reload_count = 0 if @reload_count == interval * way
+    if @reload_count % interval == 0
+      angle = @reload_count * spiral_speed % 360
+      nway(way, 0.0, angle, speed, false, type, index)
+    end
+  end
+end
