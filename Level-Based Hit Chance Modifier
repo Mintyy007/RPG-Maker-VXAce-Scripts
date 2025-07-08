@@ -1,0 +1,48 @@
+#==============================================================================
+# ■ Mintyy Works Rosetta - Level-Based Hit Chance Modifier
+#------------------------------------------------------------------------------
+# This script allows attack and skill hit chances to be influenced by the level
+# difference between the attacker and the target. Configuration is done in the
+# MintyyWR module.
+#------------------------------------------------------------------------------
+# Author: Mintyy Works Rosetta
+#==============================================================================
+
+module MintyyWR
+  #==========================================================================
+  # CONFIGURATION
+  #==========================================================================
+
+  # Percentage increase in hit chance per level of difference.
+  # e.g., 0.01 means +1% hit chance per level difference.
+  LEVEL_HIT_MODIFIER = 0.01
+
+  # Clamp the final hit chance between 0.0 (0%) and 1.0 (100%)?
+  CLAMP_HIT_CHANCE = true
+end
+
+#==============================================================================
+# ■ Game_Battler
+#------------------------------------------------------------------------------
+# Override the hit chance calculation to include level-based influence
+#==============================================================================
+
+class Game_Battler < Game_BattlerBase
+  alias mintyywr_item_hit item_hit
+
+  def item_hit(user, item)
+    base_hit = mintyywr_item_hit(user, item)
+
+    return base_hit unless item.is_a?(RPG::Skill) || item.is_a?(RPG::Item)
+
+    # Calculate level difference and modify hit chance
+    level_diff = user.level - self.level
+    hit_adjust = level_diff * MintyyWR::LEVEL_HIT_MODIFIER
+
+    final_hit = base_hit + hit_adjust
+    if MintyyWR::CLAMP_HIT_CHANCE
+      final_hit = [[final_hit, 1.0].min, 0.0].max
+    end
+    final_hit
+  end
+end
