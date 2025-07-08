@@ -13,18 +13,50 @@ module MintyyWR
   # CONFIGURATION
   #==========================================================================
 
-  # Percentage increase in hit chance per level of difference.
-  # e.g., 0.01 means +1% hit chance per level difference.
+  # Percentage modifier per level difference (e.g., 0.01 = ±1% per level)
   LEVEL_HIT_MODIFIER = 0.01
 
-  # Clamp the final hit chance between 0.0 (0%) and 1.0 (100%)?
+  # Clamp final hit chance between 0.0 and 1.0
   CLAMP_HIT_CHANCE = true
+
+  # Default level for enemies (if no notetag is set)
+  DEFAULT_ENEMY_LEVEL = 1
+
+  # Notetag format in Enemy Note Box: <level:10>
+  ENEMY_LEVEL_TAG = /<level:\s*(\d+)>/i
+end
+
+#==============================================================================
+# ■ Game_BattlerBase
+#==============================================================================
+
+class Game_BattlerBase
+  # Universal level getter: works for both actors and enemies
+  def battler_level
+    if actor?
+      level
+    elsif enemy?
+      get_enemy_level
+    else
+      1
+    end
+  end
+
+  def get_enemy_level
+    return @enemy_level if @enemy_level
+
+    note = enemy.note rescue ""
+    if note =~ MintyyWR::ENEMY_LEVEL_TAG
+      @enemy_level = $1.to_i
+    else
+      @enemy_level = MintyyWR::DEFAULT_ENEMY_LEVEL
+    end
+    @enemy_level
+  end
 end
 
 #==============================================================================
 # ■ Game_Battler
-#------------------------------------------------------------------------------
-# Override the hit chance calculation to include level-based influence
 #==============================================================================
 
 class Game_Battler < Game_BattlerBase
@@ -35,8 +67,8 @@ class Game_Battler < Game_BattlerBase
 
     return base_hit unless item.is_a?(RPG::Skill) || item.is_a?(RPG::Item)
 
-    # Calculate level difference and modify hit chance
-    level_diff = user.level - self.level
+    # Use battler_level instead of level
+    level_diff = user.battler_level - self.battler_level
     hit_adjust = level_diff * MintyyWR::LEVEL_HIT_MODIFIER
 
     final_hit = base_hit + hit_adjust
